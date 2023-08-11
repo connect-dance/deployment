@@ -20,5 +20,5 @@ resource "hcloud_server" "app_server" {
   image       = "ubuntu-22.04"
   server_type = "cax11"
   location    = "fsn1"
-  ssh_keys    = [ hcloud_ssh_key.marvin ]
+  ssh_keys    = [ hcloud_ssh_key.marvin.name ]
 }
