@@ -4,25 +4,23 @@
   inputs = {
     nixpkgs.url =
       "github:nixos/nixpkgs/nixos-unstable"; # Nix Packages collection
-    unstable.url = "github:nixos/nixpkgs";
     utils.url =
       "github:gytis-ivaskevicius/flake-utils-plus"; # Use Nix flakes without any fluff
-    nixos-hardware.url =
-      "github:NixOS/nixos-hardware"; # A collection of NixOS modules covering hardware quirks.
     agenix = {
       # age-encrypted secrets for NixOS
       url = "github:ryantm/agenix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    disko.url = "github:nix-community/disko";
-    disko.inputs.nixpkgs.follows = "nixpkgs";
+    disko = {
+      url = "github:nix-community/disko";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs =
     inputs@{ self
     , nixpkgs
     , utils
-    , nixos-hardware
     , agenix
     , disko
     , ...
@@ -32,10 +30,17 @@
 
       inputs = nixpkgs.lib.filterAttrs (n: _: n != "agenix") inputs;
 
-      supportedSystems = [ "x86_64-linux" ];
+      supportedSystems = [ "x86_64-linux" "aarch64-linux" ];
       channelsConfig.allowUnfree = true;
 
       hosts = {
+        appServer = {
+          system = "aarch64-linux";
+          modules = [
+            disko.nixosModules.disko
+            ./hosts/app-server.nix
+          ];
+        };
       };
 
       outputsBuilder = channels: {
