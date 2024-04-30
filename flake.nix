@@ -2,10 +2,8 @@
   description = "Connect.Dance Deployments";
 
   inputs = {
-    nixpkgs.url =
-      "github:nixos/nixpkgs/nixos-unstable"; # Nix Packages collection
-    utils.url =
-      "github:gytis-ivaskevicius/flake-utils-plus"; # Use Nix flakes without any fluff
+    nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable"; # Nix Packages collection
+    flake-parts.url = "github:hercules-ci/flake-parts";
     agenix = {
       # age-encrypted secrets for NixOS
       url = "github:ryantm/agenix";
@@ -15,43 +13,39 @@
       url = "github:nix-community/disko";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    nixos-anywhere.url = "github:nix-community/nixos-anywhere";
+    deploy-rs.url = "github:serokell/deploy-rs";
   };
 
-  outputs =
-    inputs@{ self
-    , nixpkgs
-    , utils
-    , agenix
-    , disko
-    , ...
-    }:
-    utils.lib.mkFlake {
-      inherit self;
+  outputs = inputs @ {flake-parts, ...}:
+    flake-parts.lib.mkFlake {inherit inputs;} {
+      systems = ["x86_64-linux" "aarch64-linux"];
 
-      inputs = nixpkgs.lib.filterAttrs (n: _: n != "agenix") inputs;
-
-      supportedSystems = [ "x86_64-linux" "aarch64-linux" ];
-      channelsConfig.allowUnfree = true;
-
-      hosts = {
-        appServer = {
-          system = "aarch64-linux";
-          modules = [
-            disko.nixosModules.disko
-            ./hosts/app-server.nix
+      perSystem = {
+        config,
+        self',
+        inputs',
+        pkgs,
+        system,
+        ...
+      }: let
+      in {
+        devShells.default = pkgs.mkShell {
+          packages = [
+            pkgs.opentofu
+            inputs'.nixos-anywhere.packages.default
+            inputs'.deploy-rs.packages.default
           ];
         };
       };
 
-      outputsBuilder = channels: {
-        devShells = {
-          default = channels.nixpkgs.mkShell {
-            name = "deplyments-shell";
-            packages = with channels.nixpkgs; [
-              nix
-              terraform
-            ];
-          };
+      flake = {
+        nixosConfigurations.appServer = inputs.nixpkgs.lib.nixosSystem {
+          system = "aarch64-linux";
+          modules = [
+            inputs.disko.nixosModules.disko
+            ./hosts/app-server.nix
+          ];
         };
       };
     };

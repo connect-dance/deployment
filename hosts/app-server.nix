@@ -1,24 +1,31 @@
-{ config, options, pkgs, modulesPath, ... }:
 {
+  modulesPath,
+  config,
+  lib,
+  pkgs,
+  ...
+}: {
   imports = [
-    "${modulesPath}/installer/scan/not-detected.nix"
-    "${modulesPath}/profiles/qemu-guest.nix"
+    (modulesPath + "/installer/scan/not-detected.nix")
+    (modulesPath + "/profiles/qemu-guest.nix")
+    ./disko.nix
   ];
-
-  disko.devices = import ./disko.nix "/dev/sda";
-
   boot.loader.grub = {
-    devices = [ "/dev/sda" ];
+    # no need to set devices, disko will add all devices that have a EF02 partition to the list already
+    # devices = [ ];
     efiSupport = true;
     efiInstallAsRemovable = true;
   };
-
   services.openssh.enable = true;
+
+  environment.systemPackages = map lib.lowPrio [
+    pkgs.curl
+    pkgs.gitMinimal
+  ];
 
   users.users.root.openssh.authorizedKeys.keys = [
     "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJCDKG7qUInSWAtpgY1AAnKtCk3M8VXyzyetbxDrCsBJ marvin@Theia"
   ];
 
-  networking.useNetworkd = true;
-  networking.useDHCP = false;
+  system.stateVersion = "23.11";
 }

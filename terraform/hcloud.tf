@@ -9,6 +9,8 @@ provider "hcloud" {
   token = var.hcloud_token
 }
 
+provider "namecheap" {}
+
 resource "hcloud_ssh_key" "marvin" {
   name       = "Marvin Admin Key"
   public_key = file("../keys/marvin_theia.pub")
@@ -21,4 +23,27 @@ resource "hcloud_server" "app_server" {
   server_type = "cax11"
   location    = "fsn1"
   ssh_keys    = [ hcloud_ssh_key.marvin.name ]
+}
+
+output "public_ip" {
+  value = hcloud_server.app_server.ipv4_address
+}
+
+resource "namecheap_domain_records" "connect_dance" {
+  domain = "connect.dance"
+  email_type = "NONE"
+
+  record {
+    hostname = "@"
+    type = "A"
+    address = hcloud_server.app_server.ipv4_address
+    ttl = 60
+  }
+
+  record {
+    hostname = "*"
+    type = "CNAME"
+    address = "connect.dance"
+    ttl = 60
+  }
 }
