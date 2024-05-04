@@ -27,15 +27,19 @@
         inputs',
         pkgs,
         system,
+        lib,
         ...
-      }: let
-      in {
-        devShells.default = pkgs.mkShell {
-          packages = [
-            pkgs.opentofu
-            inputs'.nixos-anywhere.packages.default
-            inputs'.deploy-rs.packages.default
-          ];
+      }: {
+        devShells = {
+          default = pkgs.mkShell {
+            packages = [
+              pkgs.opentofu
+              pkgs.sops
+              inputs'.nixos-anywhere.packages.default
+              inputs'.deploy-rs.packages.default
+              inputs'.agenix.packages.default
+            ];
+          };
         };
       };
 
@@ -44,8 +48,13 @@
           system = "aarch64-linux";
           modules = [
             inputs.disko.nixosModules.disko
-            ./hosts/app-server.nix
+            ./roles/app-server.nix
           ];
+        };
+        deploy.nodes.appServer.profiles.system = {
+          hostname = "connect.dance";
+          user = "root";
+          path = inputs.deploy-rs.lib.x86_64-linux.activate.nixos inputs.self.nixosConfigurations.appServer;
         };
       };
     };
