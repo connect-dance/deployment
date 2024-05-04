@@ -44,11 +44,11 @@
       };
 
       flake = {
-        nixosConfigurations.appServer = inputs.nixpkgs.lib.nixosSystem {
+        nixosConfigurations.base = inputs.nixpkgs.lib.nixosSystem {
           system = "aarch64-linux";
           modules = [
             inputs.disko.nixosModules.disko
-            ./roles/app-server.nix
+            ./roles/base.nix
           ];
         };
         deploy.nodes.appServer.profiles.system = {

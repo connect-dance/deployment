@@ -1,49 +1,41 @@
-# Set the variable value in *.tfvars file
-# or using the -var="hcloud_token=..." CLI option
-variable "hcloud_token" {
-  sensitive = true # Requires terraform >= 0.14
-}
-
-# Configure the Hetzner Cloud Provider
-provider "hcloud" {
-  token = var.hcloud_token
-}
-
-provider "namecheap" {}
-
 resource "hcloud_ssh_key" "marvin" {
   name       = "Marvin Admin Key"
   public_key = file("../keys/marvin_theia.pub")
 }
 
+resource "hcloud_primary_ip" "main" {
+  name          = "main"
+  datacenter    = "fsn1-dc14"
+  type          = "ipv4"
+  assignee_type = "server"
+  auto_delete   = true
+}
+
 # Create a server
-resource "hcloud_server" "app_server" {
-  name        = "app-server"
+resource "hcloud_server" "prod_fsn_01" {
+  name        = "prod-fsn-01"
   image       = "ubuntu-22.04"
   server_type = "cax11"
-  location    = "fsn1"
+  datacenter    = "fsn1-dc14"
   ssh_keys    = [ hcloud_ssh_key.marvin.name ]
+  public_net {
+    ipv4 = hcloud_primary_ip.main.id
+  }
 }
 
-output "public_ip" {
-  value = hcloud_server.app_server.ipv4_address
+output "main_public_ip" {
+  value = hcloud_primary_ip.main.ip_address
 }
 
-resource "namecheap_domain_records" "connect_dance" {
-  domain = "connect.dance"
-  email_type = "NONE"
+resource "hetznerdns_zone" "connect_dance" {
+  name = "connect.dance"
+  ttl = 3600
+}
 
-  record {
-    hostname = "@"
+resource "hetznerdns_record" "prod_fsn_01" {
+    zone_id = hetznerdns_zone.connect_dance.id
+    name = "prod-fsn-01"
+    value = hcloud_server.prod_fsn_01.ipv4_address
     type = "A"
-    address = hcloud_server.app_server.ipv4_address
-    ttl = 60
-  }
-
-  record {
-    hostname = "*"
-    type = "CNAME"
-    address = "connect.dance"
-    ttl = 60
-  }
+    ttl= 60
 }

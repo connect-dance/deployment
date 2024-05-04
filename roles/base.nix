@@ -16,12 +16,26 @@
     efiSupport = true;
     efiInstallAsRemovable = true;
   };
+
   services.openssh.enable = true;
 
-  environment.systemPackages = map lib.lowPrio [
-    pkgs.curl
-    pkgs.gitMinimal
+  environment.systemPackages = with pkgs; [
+    coreutils
+    curl
+    dnsutils
+    gitMinimal
+    gotop
+    htop
+    bottom
+    iputils
   ];
+
+  programs.neovim = {
+    enable = true;
+    defaultEditor = true;
+    vimAlias = true;
+    viAlias = true;
+  };
 
   users.users.root.openssh.authorizedKeys.keys = [
     "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJCDKG7qUInSWAtpgY1AAnKtCk3M8VXyzyetbxDrCsBJ marvin@Theia"

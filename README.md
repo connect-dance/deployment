@@ -26,3 +26,23 @@ I followed [this guide](https://devops.datenkollektiv.de/using-sops-with-age-and
 - https://nixos.wiki/wiki/Install_NixOS_on_Hetzner_Cloud#Network_configuration
 - https://flakm.com/posts/nixos_rust/03_deployment/
 - Setup NetBird VPN
+
+## How-To: Provision new machine
+
+1. `tofu apply`
+2. Go to Hetzner console and mount the NixOS iso
+3. Go to console of the VM and add the public key to authorized keys
+
+```sh
+sudo -i
+mkdir .ssh && curl https://raw.githubusercontent.com/connect-dance/deployment/main/keys/marvin_theia.pub > .ssh/authorized_keys
+```
+
+4. Run nixos-anywhere
+
+``` sh
+nixos-anywhere -i ~/.ssh/id_ed25519 --flake .#base root@prod-fsn-01.connect.dance
+```
+
+5. Unmount the iso and restart the VM
+
