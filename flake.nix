@@ -44,17 +44,30 @@
       };
 
       flake = {
-        nixosConfigurations.base = inputs.nixpkgs.lib.nixosSystem {
-          system = "aarch64-linux";
-          modules = [
-            inputs.disko.nixosModules.disko
-            ./roles/base.nix
-          ];
+        nixosConfigurations = {
+          base = inputs.nixpkgs.lib.nixosSystem {
+            system = "aarch64-linux";
+            modules = [
+              inputs.disko.nixosModules.disko
+              ./roles/base.nix
+            ];
+          };
+
+          app-server = inputs.nixpkgs.lib.nixosSystem {
+            system = "aarch64-linux";
+            modules = [
+              inputs.disko.nixosModules.disko
+              ./roles/app-server.nix
+            ];
+          };
         };
-        deploy.nodes.appServer.profiles.system = {
-          hostname = "connect.dance";
-          user = "root";
-          path = inputs.deploy-rs.lib.x86_64-linux.activate.nixos inputs.self.nixosConfigurations.appServer;
+        deploy.nodes.prod-fsn-01 = {
+          hostname = "prod-fsn-01.connect.dance";
+          sshUser = "root";
+          profiles.system = {
+            user = "root";
+            path = inputs.deploy-rs.lib.aarch64-linux.activate.nixos inputs.self.nixosConfigurations.app-server;
+          };
         };
       };
     };

@@ -39,3 +39,19 @@ resource "hetznerdns_record" "prod_fsn_01" {
     type = "A"
     ttl= 60
 }
+
+resource "hetznerdns_record" "connect_dance" {
+    zone_id = hetznerdns_zone.connect_dance.id
+    name = "@"
+    value = hcloud_server.prod_fsn_01.ipv4_address
+    type = "A"
+    ttl= 60
+}
+
+resource "hetznerdns_record" "catchall" {
+    zone_id = hetznerdns_zone.connect_dance.id
+    name = "*"
+    value = "connect.dance."
+    type = "CNAME"
+    ttl= 60
+}
